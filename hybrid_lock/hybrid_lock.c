@@ -27,8 +27,8 @@ int hybrid_lock_lock(struct hybrid_lock *lock)
 	int i=0,count=0,j=0;
 	while(i==0){
 		if(pthread_spin_trylock(&lock->s_lock)==0){
-			//i++;
-			return 0;
+			i++;
+			//return 0;
 		}
 		/* 1sec spinlock until get lock */
 		gettimeofday(&current_time,NULL);
@@ -80,15 +80,25 @@ int hybrid_lock_lock(struct hybrid_lock *lock)
 	gettimeofday(&end_time,NULL);
 	diff_time=end_time.tv_sec-start_time.tv_sec;
 	diff_time +=(end_time.tv_usec-start_time.tv_usec)/ 1000000.0;
-	
-	pthread_mutex_lock(&lock->m_lock);//
-	if(i==0&j==0){
-		pthread_spin_lock(&lock->s_lock);
+	if(j==0) {
+		pthread_mutex_lock(&lock->m_lock);
+		if(i == 0) {
+			pthread_spin_lock(&lock->s_lock);
+		}
+	}else{
+		if(i==0){
+			pthread_spin_lock(&lock->s_lock);
+		}
 		
 	}
+
+
+	
+	
+	printf("total spin time : %lf\n",diff_time);
+	printf("gettimeofday count : %d\n",count);
+	
 	return 0;
-	//printf("total spin time : %lf\n",diff_time);
-	//printf("gettimeofday count : %d\n",count);
 }
 
 int hybrid_lock_unlock(struct hybrid_lock *lock)
